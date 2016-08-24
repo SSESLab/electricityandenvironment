@@ -1,2 +1,2 @@
 # electricityandenvironment
-Work related to quantifying the environmental impacts of electricity purchased from the grid
+Quantifying the environmental impacts of electricity purchased from the grid
