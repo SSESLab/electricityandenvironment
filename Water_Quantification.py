@@ -1,6 +1,6 @@
 #Kaden Plewe
 #08/26/2016
-#Change Test
+
 #-----------------------------------------------------------------------------
 #This script will be used to model the water consumption attributed to the 
 #power generation fuel mix within a specific location over a specified time
@@ -203,25 +203,43 @@ while True:
 		#Collect data for each generation type 
 		gen_d = {'coal': [], 'natgas': [], 'nuclear': [], 'biogas': [], 'wind': [], \
 			    'geo': [], 'solarth': [], 'solarpv': [], 'smhydro': [], 'biomass': []} 
+		reduced_date = []
+		reduced_time = []
 		next_page = js_data['next']
+		current_date = ['', '', '']
+		current_hour = ''
 		while next_page != None:															#Multiple pages of requested data
 			len_data = len(js_data['results'])												#Number of timestamped data groups
 			for j in range(0, len_data):
 				mix_num = len(js_data['results'][j]['genmix'])								#Number of fuel types listed
 				dat_time.append(js_data['results'][j]['timestamp'])							#Timestamp for datapoints at index dat_cnt
-				for key, val in list(gen_d.items()): gen_d[key].append(0) 					#Append placeholder in each list for new data point
+				time_match = time_rx.findall(dat_time[j])								 	#Outputs list: ['year', 'month', 'day', 'hour', 'minute', second']
+				date = [time_match[0], time_match[1], time_match[2]]
+#				print(date)
+				hour = time_match[3]
+				if date != current_date or hour != current_hour: 
+					print(date, "||", current_date)
+					print(hour, "||", current_hour)
+					reduced_date.append(date[0] + "-" + date[1] + "-" + date[2])
+					reduced_time.append(hour)
+					current_date = date
+					current_hour = hour
+					#print(date, hour)
+					#print(reduced_date[dat_cnt], reduced_time[dat_cnt])
+					dat_cnt += 1															#Increment list if in new hour
+					for key, val in list(gen_d.items()): gen_d[key].append(0) 				#Append placeholder in each list for new data point if in new hour
 				for k in range(0, mix_num):
 					data_freq = js_data['results'][j]['freq']
 					fuel_type = js_data['results'][j]['genmix'][k]['fuel']
 					fuel_MW = js_data['results'][j]['genmix'][k]['gen_MW']
-					if fuel_type not in list(gen_d.keys()): continue										
-					else: gen_d[fuel_type][dat_cnt] = fuel_MW
-				dat_cnt += 1
+					if fuel_type not in list(gen_d.keys()): continue
+					else: gen_d[fuel_type][dat_cnt-1] += fuel_MW		
+	
 			
 			#Get next page of data
 			try: next_req = urllib.request.urlopen(next_page)
 			except: 
-				print("==== Unable to retrieve subsequent pages. Data may be missing. ====")
+				print("==== 111 Unable to retrieve subsequent pages. Data may be missing. ====")
 				continue
 			
 			#Read url data
@@ -232,17 +250,17 @@ while True:
 				js_data = json.loads(data)	
 			except:
 				js_data = None
-				print("==== Unable to retrieve subsequent pages. Data may be missing. ====")
+				print("==== 222 Unable to retrieve subsequent pages. Data may be missing. ====")
 				continue
 			next_page = js_data['next']	
 			page += 1
-			print("")
+'''			print("")
 			print("Page ", page, "of request data:")
 			print("")	
-			print(json.dumps(js_data, indent=4))	
+			print(json.dumps(js_data, indent=4))'''		
 			
 		#Display output data
-		print("")
+'''		print("")
 		print("coal MW: ", gen_d['coal'])
 		print("")
 		print("natgas MW: ", gen_d['natgas'])
@@ -263,12 +281,15 @@ while True:
 		print("")
 		print("biomass MW: ", gen_d['biomass'])
 		print("")
-		
+
 		print("TIME: ", dat_time)
-			
+		print("Hourly Time: ", reduced_date)
+		print("Gen Length: ", len(gen_d['biomass']))
+		print("Time Tot Length: ", len(dat_time))
+		print("Reduced Time Length: ", len(reduced_date))
 				
 		for key, val in list(gen_d.items()): gen_d[key] = []
-		
+'''		
 #-----------------------------------------------------------------------------
 #Output numbers to an external file to be validated
 
