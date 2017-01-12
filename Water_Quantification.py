@@ -14,6 +14,8 @@
 import urllib.request, urllib.parse, urllib.error
 import json, csv
 import re
+import matplotlib.pyplot as plt
+
 
 #-----------------------------------------------------------------------------
 #Power generation fuel types being included in this model are listed below
@@ -146,8 +148,8 @@ while True:
 	#start_time = input('Start Time (ex. 2016-8-25T00:00:00): ')
 	#end_time = input('End Time (ex. 2016-8-25T23:59:00): ')
 	#print("")
-	start_time = '2016-8-25T00:00:00'
-	end_time = '2016-8-25T23:59:00'
+	start_time = '2016-8-23T00:00:00'
+	end_time = '2016-8-26T23:59:00'
 	
 	#Url for token retrieval
 	auth_url = 'https://api.watttime.org/api/v1/obtain-token-auth/?'
@@ -208,18 +210,20 @@ while True:
 		next_page = js_data['next']
 		current_date = ['', '', '']
 		current_hour = ''
+		i = 0
 		while next_page != None:															#Multiple pages of requested data
 			len_data = len(js_data['results'])												#Number of timestamped data groups
 			for j in range(0, len_data):
 				mix_num = len(js_data['results'][j]['genmix'])								#Number of fuel types listed
 				dat_time.append(js_data['results'][j]['timestamp'])							#Timestamp for datapoints at index dat_cnt
-				time_match = time_rx.findall(dat_time[j])								 	#Outputs list: ['year', 'month', 'day', 'hour', 'minute', second']
+				time_match = time_rx.findall(dat_time[i+j])
+				print(time_match)								 	#Outputs list: ['year', 'month', 'day', 'hour', 'minute', second']
 				date = [time_match[0], time_match[1], time_match[2]]
-#				print(date)
+				#print(date)
 				hour = time_match[3]
 				if date != current_date or hour != current_hour: 
-					print(date, "||", current_date)
-					print(hour, "||", current_hour)
+					#print(date, "||", current_date)
+					#print(hour, "||", current_hour)
 					reduced_date.append(date[0] + "-" + date[1] + "-" + date[2])
 					reduced_time.append(hour)
 					current_date = date
@@ -235,7 +239,7 @@ while True:
 					if fuel_type not in list(gen_d.keys()): continue
 					else: gen_d[fuel_type][dat_cnt-1] += fuel_MW		
 	
-			
+			i += j
 			#Get next page of data
 			try: next_req = urllib.request.urlopen(next_page)
 			except: 
@@ -254,42 +258,41 @@ while True:
 				continue
 			next_page = js_data['next']	
 			page += 1
-'''			print("")
+			print("")
 			print("Page ", page, "of request data:")
 			print("")	
-			print(json.dumps(js_data, indent=4))'''		
+			print(json.dumps(js_data, indent=4))	
 			
 		#Display output data
-'''		print("")
-		print("coal MW: ", gen_d['coal'])
-		print("")
-		print("natgas MW: ", gen_d['natgas'])
-		print("")
-		print("nuclear MW: ", gen_d['nuclear'])
-		print("")
-		print("biogas MW: ", gen_d['biogas'])
-		print("")
-		print("wind MW: ", gen_d['wind'])
-		print("")
-		print("geo MW: ", gen_d['geo'])
-		print("")
-		print("solarth MW: ", gen_d['solarth'])
-		print("")
-		print("solarpv MW: ", gen_d['solarpv'])
-		print("")
-		print("smhydro MW: ", gen_d['smhydro'])
-		print("")
-		print("biomass MW: ", gen_d['biomass'])
-		print("")
+#		print("")
+#		print("coal MW: ", gen_d['coal'])
+#		print("")
+#		print("natgas MW: ", gen_d['natgas'])
+#		print("")
+#		print("nuclear MW: ", gen_d['nuclear'])
+#		print("")
+#		print("biogas MW: ", gen_d['biogas'])
+#		print("")
+#		print("wind MW: ", gen_d['wind'])
+#		print("")
+#		print("geo MW: ", gen_d['geo'])
+#		print("")
+#		print("solarth MW: ", gen_d['solarth'])
+#		print("")
+#		print("solarpv MW: ", gen_d['solarpv'])
+#		print("")
+#		print("")
+#		print("biomass MW: ", gen_d['biomass'])
+#		print("")
+#		
+#		print("TIME: ", dat_time)
+#		print("Hourly Time: ", reduced_date)
+#		print("Gen Length: ", len(gen_d['biomass']))
+#		print("Time Tot Length: ", len(dat_time))
+#		print("Reduced Time Length: ", len(reduced_date))
 
-		print("TIME: ", dat_time)
-		print("Hourly Time: ", reduced_date)
-		print("Gen Length: ", len(gen_d['biomass']))
-		print("Time Tot Length: ", len(dat_time))
-		print("Reduced Time Length: ", len(reduced_date))
-				
 		for key, val in list(gen_d.items()): gen_d[key] = []
-'''		
+		
 #-----------------------------------------------------------------------------
 #Output numbers to an external file to be validated
 
