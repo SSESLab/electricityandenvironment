@@ -14,6 +14,8 @@
 import urllib.request, urllib.parse, urllib.error
 import json, csv
 import re
+import matplotlib.pyplot as plt
+
 
 #-----------------------------------------------------------------------------
 #Power generation fuel types being included in this model are listed below
@@ -31,9 +33,7 @@ import re
 
 #Dictionary being used to store all retrieved data
 gen_d = {'coal': [], 'natgas': [], 'nuclear': [], 'biogas': [], 'wind': [], \
-'geo': [], 'solarth': [], 'solarpv': [], 'smhydro': [], 'biomass': []} 
-gen_d_hourly = {'coal': [], 'natgas': [], 'nuclear': [], 'biogas': [], 'wind': [], \
-'geo': [], 'solarth': [], 'solarpv': [], 'smhydro': [], 'biomass': []} 
+        'geo': [], 'solarth': [], 'solarpv': [], 'smhydro': [], 'biomass': []} 
 dat_time = []
 dat_cnt = 0
 
@@ -146,8 +146,8 @@ while True:
 	#start_time = input('Start Time (ex. 2016-8-25T00:00:00): ')
 	#end_time = input('End Time (ex. 2016-8-25T23:59:00): ')
 	#print("")
-	start_time = '2016-8-25T00:00:00'
-	end_time = '2016-8-25T23:59:00'
+	start_time = '2016-8-23T00:00:00'
+	end_time = '2016-8-26T23:59:00'
 	
 	#Url for token retrieval
 	auth_url = 'https://api.watttime.org/api/v1/obtain-token-auth/?'
@@ -203,25 +203,45 @@ while True:
 		#Collect data for each generation type 
 		gen_d = {'coal': [], 'natgas': [], 'nuclear': [], 'biogas': [], 'wind': [], \
 			    'geo': [], 'solarth': [], 'solarpv': [], 'smhydro': [], 'biomass': []} 
+		reduced_date = []
+		reduced_time = []
 		next_page = js_data['next']
+		current_date = ['', '', '']
+		current_hour = ''
+		i = 0
 		while next_page != None:															#Multiple pages of requested data
 			len_data = len(js_data['results'])												#Number of timestamped data groups
 			for j in range(0, len_data):
 				mix_num = len(js_data['results'][j]['genmix'])								#Number of fuel types listed
 				dat_time.append(js_data['results'][j]['timestamp'])							#Timestamp for datapoints at index dat_cnt
-				for key, val in list(gen_d.items()): gen_d[key].append(0) 					#Append placeholder in each list for new data point
+				time_match = time_rx.findall(dat_time[i+j])
+				#print(time_match)								 	#Outputs list: ['year', 'month', 'day', 'hour', 'minute', second']
+				date = [time_match[0], time_match[1], time_match[2]]
+				#print(date)
+				hour = time_match[3]
+				if date != current_date or hour != current_hour: 
+					print(date, "||", current_date)
+					print(hour, "||", current_hour)
+					reduced_date.append(date[0] + "-" + date[1] + "-" + date[2])
+					reduced_time.append(hour)
+					current_date = date
+					current_hour = hour
+					#print(date, hour)
+					#print(reduced_date[dat_cnt], reduced_time[dat_cnt])
+					dat_cnt += 1															#Increment list if in new hour
+					for key, val in list(gen_d.items()): gen_d[key].append(0) 				#Append placeholder in each list for new data point if in new hour
 				for k in range(0, mix_num):
 					data_freq = js_data['results'][j]['freq']
 					fuel_type = js_data['results'][j]['genmix'][k]['fuel']
 					fuel_MW = js_data['results'][j]['genmix'][k]['gen_MW']
-					if fuel_type not in list(gen_d.keys()): continue										
-					else: gen_d[fuel_type][dat_cnt] = fuel_MW
-				dat_cnt += 1
-			
+					if fuel_type not in list(gen_d.keys()): continue
+					else: gen_d[fuel_type][dat_cnt-1] += fuel_MW		
+	
+			i += j
 			#Get next page of data
 			try: next_req = urllib.request.urlopen(next_page)
 			except: 
-				print("==== Unable to retrieve subsequent pages. Data may be missing. ====")
+				print("==== 111 Unable to retrieve subsequent pages. Data may be missing. ====")
 				continue
 			
 			#Read url data
@@ -232,49 +252,68 @@ while True:
 				js_data = json.loads(data)	
 			except:
 				js_data = None
-				print("==== Unable to retrieve subsequent pages. Data may be missing. ====")
+				print("==== 222 Unable to retrieve subsequent pages. Data may be missing. ====")
 				continue
 			next_page = js_data['next']	
-			page += 1
-			print("")
-			print("Page ", page, "of request data:")
-			print("")	
-			print(json.dumps(js_data, indent=4))	
-			
+		    page += 1
+#			print("")
+#			print("Page ", page, "of request data:")
+#			print("")	
+#			print(json.dumps(js_data, indent=4))	
+	
 		#Display output data
-		print("")
-		print("coal MW: ", gen_d['coal'])
-		print("")
-		print("natgas MW: ", gen_d['natgas'])
-		print("")
-		print("nuclear MW: ", gen_d['nuclear'])
-		print("")
-		print("biogas MW: ", gen_d['biogas'])
-		print("")
-		print("wind MW: ", gen_d['wind'])
-		print("")
-		print("geo MW: ", gen_d['geo'])
-		print("")
-		print("solarth MW: ", gen_d['solarth'])
-		print("")
-		print("solarpv MW: ", gen_d['solarpv'])
-		print("")
-		print("smhydro MW: ", gen_d['smhydro'])
-		print("")
-		print("biomass MW: ", gen_d['biomass'])
-		print("")
-		
-		print("TIME: ", dat_time)
-			
-				
-		for key, val in list(gen_d.items()): gen_d[key] = []
-		
-#-----------------------------------------------------------------------------
-#Output numbers to an external file to be validated
+#		print("")
+#		print("coal MW: ", gen_d['coal'])
+#		print("")
+#		print("natgas MW: ", gen_d['natgas'])
+#		print("")
+#		print("nuclear MW: ", gen_d['nuclear'])
+#		print("")
+#		print("biogas MW: ", gen_d['biogas'])
+#		print("")
+#		print("wind MW: ", gen_d['wind'])
+#		print("")
+#		print("geo MW: ", gen_d['geo'])
+#		print("")
+#		print("solarth MW: ", gen_d['solarth'])
+#		print("")
+#		print("solarpv MW: ", gen_d['solarpv'])
+#		print("")
+#		print("")
+#		print("biomass MW: ", gen_d['biomass'])
+#		print("")
+		gen_length = len(gen_d['biomass'])
+		print("TIME: ", reduced_time)
+		print("Hourly Time: ", reduced_date)
+		print("Gen Length: ", gen_length)
+		print("Time Tot Length: ", len(dat_time))
+		print("Reduced Time Length: ", len(reduced_date))
 
-#	with open('WattTime_Data.csv', 'wb') as f:
-#		w = csv.DictWriter(f, gen_d.keys())
-#		w.writerow(gen_d.items())
+#		for key, val in list(gen_d.items()): gen_d[key] = []
+
+#--------------------------------------------------------------------------------------
+#Apply water factors to the generation mix data to find water withdrawl and consumption
+
+    #Macknick's Withdraw and Consumption Factors [withdrawl, consumption] [gal/MWh] 
+    #NOTE: Assumes all plants use cooling towers
+    WCF = {'coal': [1005 687], 'natgas': [225 205], 'nuclear': [1101 672],\
+        'biogas': [878 235], 'wind': [1 1], 'geo': [15 15], 'solarth': [786 786],\
+        'solarpv': [1 1], 'smhydro': [0 4491], 'biomass': [878 235]}
+    W_Cons = {'coal': [], 'natgas': [], 'nuclear': [], 'biogas': [], 'wind': [],\
+	    'geo': [], 'solarth': [], 'solarpv': [], 'smhydro': [], 'biomass': []}
+    W_With = {'coal': [], 'natgas': [], 'nuclear': [], 'biogas': [], 'wind': [],\
+	    'geo': [], 'solarth': [], 'solarpv': [], 'smhydro': [], 'biomass': []} 
+
+    for i in range(0, gen_length):
+        for key, val in list(gen_d.items()):
+            W_Cons[key].append(gen_d[key][i]*WCF[key][1])
+            W_With[key].append(gen_d[key][i]*WCF[key][2])
+         
+		
+    print("Generation: ", gen_d)
+    print("Consumption: ", W_Cons)
+    print("Withdrawl: ", W_With)
+
 	
 					
 			
