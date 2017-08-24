@@ -1,14 +1,20 @@
-# Kaden Plewe
-# 08/26/2016
+# Developed by Kaden Plewe
+# Start Date: 08/26/2016
 
 # -----------------------------------------------------------------------------
-# This script will be used to model the water consumption attributed to the
-# power generation fuel mix within a specific location over a specified time
+# This script will be used to model the water consumption, water withdrawal, CO2 emissions, NOx emissions
+# and SO2 emissions attributed to the power generation fuel mix within a specific location over a specified time
 # frame.
 # User Inputs
 # ----Location: The location for which the numbers will correlate to (city, state, etc.)
+# ----Time Frame: The start and end data/time from which data will be pulled
+# ----WattTime Credentials: Username and password for a valid WattTime API account
 # Outputs
-# ----TBD
+# ----Time Array
+# ----Generation for each fuel type
+# ----Water Consumption
+# ----Water Withdrawal
+# ----COs, NOx and SO2 emissions
 # -----------------------------------------------------------------------------
 import Find_EmissionRates as ER
 import urllib.request, urllib.parse, urllib.error
@@ -42,10 +48,10 @@ dat_time = []
 dat_cnt = 0
 
 # Conversion factors for water consumption, water withdrawal and emissions ([withdrawal, consumption, CO2, NOx, SO2])
-convert = {'coal': [1005, 687, 0, 0, 0], 'natgas': [225, 205, 0, 0, 0], 'nuclear': [1101, 672, 0, 0, 0],
-           'biogas': [878, 235, 0, 0, 0], 'wind': [0, 0, 0, 0, 0], 'geo': [15, 15, 0, 0, 0],
-           'solarth': [786, 786, 0, 0, 0], 'solarpv': [0, 0, 0, 0, 0], 'smhydro': [0, 4491, 0, 0, 0],
-           'biomass': [878, 235, 0, 0, 0]}
+convert = {'factor': ['withdrawal', 'consumption', 'CO2', 'NOx', 'SO2'], 'coal': [1005, 687, 0, 0, 0],
+           'natgas': [225, 205, 0, 0, 0], 'nuclear': [1101, 672, 0, 0, 0], 'biogas': [878, 235, 0, 0, 0],
+           'wind': [0, 0, 0, 0, 0], 'geo': [15, 15, 0, 0, 0], 'solarth': [786, 786, 0, 0, 0],
+           'solarpv': [0, 0, 0, 0, 0], 'smhydro': [0, 4491, 0, 0, 0], 'biomass': [878, 235, 0, 0, 0]}
 
 # Declare regular expression sequences to be used in this script
 time_rx = re.compile('[^-:TZ][0-9]*')
@@ -142,18 +148,18 @@ while True:
 
     # Input WattTime API username and p-word to obtain access key
     # print("Please provide a username and password for a valid WattTime account.")
-    # u_name = input('Username: ')
-    # p_word = input('Password: ')
-    u_name = 'kaden.plewe'
-    p_word = 'WasatchMnt66^'
+    u_name = input('Username: ')
+    p_word = input('Password: ')
 
     # Select start and end time for data interval
-    # print("Please indicate the start and end time for the data collection interval")
-    # start_time = input('Start Time (ex. 2016-8-25T00:00:00): ')
-    # end_time = input('End Time (ex. 2016-8-25T23:59:00): ')
-    # print("")
-    start_time = '2016-8-19T00:00:00'
-    end_time = '2016-8-26T23:59:00'
+    print("Please indicate the start and end time for the data collection interval")
+    start_time = input('Start Time (ex. 2016-8-25T00:00:00): ')
+    end_time = input('End Time (ex. 2016-8-25T23:59:00): ')
+    print("")
+
+    #Test Range
+    #start_time = '2016-8-19T00:00:00'
+    #end_time = '2016-8-26T23:59:00'
 
     # Url for token retrieval
     auth_url = 'https://api.watttime.org/api/v1/obtain-token-auth/?'
@@ -163,11 +169,6 @@ while True:
 
     # Retrieve and format token text to be used a header
     req_token = urllib.request.urlopen(auth_url, auth_info.encode('utf-8'))
-
-    # try: req_token = urllib.request.urlopen(auth_url, auth_info)
-    # except:
-    #    print("==== Unable to Retrieve Token ====")
-    #    continue
 
     r_token = req_token.read().decode('utf-8')
     js_token = json.loads(r_token)
@@ -216,14 +217,14 @@ while True:
     next_page = js_data['next']
     current_date = ['', '', '']
     current_hour = ''
-    i = 0
-    while next_page != None:  # Multiple pages of requested data
+    i = -1
+    while (next_page != None) or (page == 1):  # Multiple pages of requested data or first iteration
         len_data = len(js_data['results'])  # Number of timestamped data groups
-        for j in range(0, len_data):
+        for j in range(1, len_data-1):
             mix_num = len(js_data['results'][j]['genmix'])  # Number of fuel types listed
             dat_time.append(js_data['results'][j]['timestamp'])  # Timestamp for datapoints at index dat_cnt
             time_match = time_rx.findall(dat_time[i + j])
-            # print(time_match)								 							#['year', 'month', 'day', 'hour', 'minute', second']
+            # print(time_match)								#['year', 'month', 'day', 'hour', 'minute', second']
             date = [time_match[0], time_match[1], time_match[2]]
             # print(date)
             hour = time_match[3]
@@ -243,29 +244,30 @@ while True:
                 data_freq = js_data['results'][j]['freq']
                 fuel_type = js_data['results'][j]['genmix'][k]['fuel']
                 fuel_MW = js_data['results'][j]['genmix'][k]['gen_MW']
-                if fuel_type not in list(gen_d.keys()):
-                    continue
-                else:
+                if fuel_type in list(gen_d.keys()):
                     gen_d[fuel_type][dat_cnt - 1] += fuel_MW
         i += j
-        # Get next page of data
-        try:
-            next_req = urllib.request.urlopen(next_page)
-        except:
-            print("==== 111 Unable to retrieve subsequent pages. Data may be missing. ====")
-            continue
 
-        # Read url data
-        data = next_req.read().decode('utf-8')
+        if next_page != None:
+            # Get next page of data
+            try:
+                next_req = urllib.request.urlopen(next_page)
+            except:
+                #print("==== Unable to retrieve subsequent pages. Data may be missing. ====")
+                continue
 
-        # Load data into json format
-        try:
-            js_data = json.loads(data)
-        except:
-            js_data = None
-            print("==== 222 Unable to retrieve subsequent pages. Data may be missing. ====")
-            continue
-        next_page = js_data['next']
+            # Read url data
+            data = next_req.read().decode('utf-8')
+
+            # Load data into json format
+            try:
+                js_data = json.loads(data)
+            except:
+                js_data = None
+                #print("==== Unable to retrieve subsequent pages. Data may be missing. ====")
+                continue
+            next_page = js_data['next']
+
         page += 1
         #           print("")
         #    	    print("Page ", page, "of request data:")
@@ -290,7 +292,6 @@ while True:
     print("")
     print("solarpv MWh: ", gen_d['solarpv'])
     print("")
-    print("")
     print("biomass MWh: ", gen_d['biomass'])
     print("")
 
@@ -313,15 +314,22 @@ while True:
     NOx = np.zeros(gen_len)
     SO2 = np.zeros(gen_len)
 
+    #change ba abbreviations to match those in the eGRID database
+    if ba_abbrev == 'BPA': ba_abbrev = 'BPAT'
+    if ba_abbrev == 'CAISO': ba_abbrev = 'CISO'
+    if ba_abbrev == 'ERCOT': ba_abbrev = 'ERCO'
+    if ba_abbrev == 'ISONE': ba_abbrev = 'ISNE'
+    if ba_abbrev == 'SPP': ba_abbrev = 'SWPP'
+
     # Import spatial emission factors
     BA_Data = ER.import_emission_factors()
-    convert['coal'][2:4] = [BA_Data[ba_abbrev].COAL['CO2'], BA_Data[ba_abbrev].COAL['NOx'],
+    convert['coal'][2:] = [BA_Data[ba_abbrev].COAL['CO2'], BA_Data[ba_abbrev].COAL['NOx'],
                             BA_Data[ba_abbrev].COAL['SO2']]
-    convert['natgas'][2:4] = [BA_Data[ba_abbrev].GAS['CO2'], BA_Data[ba_abbrev].GAS['NOx'],
+    convert['natgas'][2:] = [BA_Data[ba_abbrev].GAS['CO2'], BA_Data[ba_abbrev].GAS['NOx'],
                               BA_Data[ba_abbrev].GAS['SO2']]
-    convert['biogas'][2:4] = [BA_Data[ba_abbrev].GAS['CO2'], BA_Data[ba_abbrev].GAS['NOx'],
+    convert['biogas'][2:] = [BA_Data[ba_abbrev].GAS['CO2'], BA_Data[ba_abbrev].GAS['NOx'],
                               BA_Data[ba_abbrev].GAS['SO2']]
-    convert['biomass'][2:4] = [BA_Data[ba_abbrev].BIOMASS['CO2'], BA_Data[ba_abbrev].BIOMASS['NOx'],
+    convert['biomass'][2:] = [BA_Data[ba_abbrev].BIOMASS['CO2'], BA_Data[ba_abbrev].BIOMASS['NOx'],
                                BA_Data[ba_abbrev].BIOMASS['SO2']]
 
     print(convert)
@@ -334,7 +342,7 @@ while True:
         NOx += np.multiply(val, convert[key][3])
         SO2 += np.multiply(val, convert[key][4])
 
-    Table1 = pd.DataFrame({'Coal Produduction [MWh]': gen_d['coal'], 'Natural Gas Production [MWh]': gen_d['natgas'],
+    Table1 = pd.DataFrame({'Coal Production [MWh]': gen_d['coal'], 'Natural Gas Production [MWh]': gen_d['natgas'],
                            'Nuclear Production [MWh]': gen_d['nuclear'], 'Bio-Gas Production [MWh]': gen_d['biogas'],
                            'Wind Production [MWh]': gen_d['wind'], 'Geothermal Production [MWh]': gen_d['geo'],
                            'Solar Thermal Production [MWh]': gen_d['solarth'],
@@ -343,6 +351,7 @@ while True:
                            'Water Consumption [gal]': consumption, 'CO2 [lbs]': CO2, 'NOx [lbs]': NOx, 'SO2 [lbs]': SO2,
                            'Date': reduced_date, 'Time': reduced_time})
     Table2 = pd.DataFrame({})
+    Table3 = pd.DataFrame(convert)
 
     # -----------------------------------------------------------------------------
     # Write data to an editable excel file
@@ -351,11 +360,14 @@ while True:
     results_writer = pd.ExcelWriter('Results.xlsx', engine='xlsxwriter')
     Table2.to_excel(results_writer, sheet_name='Metadata')
     Table1.to_excel(results_writer, sheet_name='Results')
+    Table3.to_excel(results_writer, sheet_name='Conversion Factors')
+
 
     # Create workbook and sheets
     results_workbook = results_writer.book
     results = results_writer.sheets['Results']
     metadata = results_writer.sheets['Metadata']
+    factors = results_writer.sheets['Conversion Factors']
 
     # Import metadata for this dataset
     # lat = 40.7608
@@ -364,6 +376,7 @@ while True:
     # start_time = '2016-8-19T00:00:00'
     # end_time = '2016-8-26T23:59:00'
     # ba_name = 'Western Electricity Coordinating Council'  # name attribute - full name of balancing authority
+
     # ba_urls = 'https://www.wecc.biz/Pages/home.aspx'  # url attribute - location on WattTime balancing authority page
     # ba_abbrev = 'WECC'  # abbrev attribute - abbreviation for balancing authority
 
@@ -381,61 +394,15 @@ while True:
     # Add formating
     metadata.set_column('A:B', 35)
     results.set_column('B:O', 15)
-
-    # -----------------------------------------------------------------------------
-    # Generate Plots
+    factors.set_column('B:K', 20)
 
     #Generation Table
     Table = pd.DataFrame(gen_d, columns = ['coal', 'natgas', 'nuclear', 'biogas', 'wind',\
                 'geo', 'solarth', 'solarpv', 'smhydro', 'biomass'])
 
-    #Generation Bar Plot
-    plt.figure(1)
-    N = len(gen_d['coal'])
-    ind = np.arange(N)
-    width = 0.35
-
-    one = plt.bar(ind, gen_d['coal'], width, color='k')
-    two = plt.bar(ind, gen_d['natgas'], width, color='g',\
-    bottom=gen_d['coal'])
-    three = plt.bar(ind, gen_d['nuclear'], width, color='b',\
-    bottom=[i+j for i, j in zip(gen_d['coal'], gen_d['natgas'])])
-
-    plt.ylabel('Production [MW]')
-    plt.title('Fuel Mix')
-    plt.xticks(ind + width/2., reduced_time)
-    plt.legend(('coal', 'natgas', 'nuclear'))
-
-    #Total Generation Pie Chart
-    #	plt.figure(2)
-    #   pie_labels = ['other']
-    #   totals = {'other': []}
-    #   for key in list(gen_d.items()):
-    #       weight = sum(gen_d[key])/total_gen
-    #       if weight < 0.1:
-    #           totals['other'] += sum(gen_d[key])
-    #       else:
-    #           totals[key] = sum(gen_d[key])
-    #           pie_labels.append(key)
-
-    #  pie_labels = 'coal', 'natgas', 'nuclear', 'biogas', 'wind', 'geo', 'solarth', 'solarpv', 'smhydro', 'biomass'
-    #  totals = [sum(gen_d['coal']), sum(gen_d['natgas']), sum(gen_d['nuclear']), sum(gen_d['biogas']), sum(gen_d['wind']), \
-    #                sum(gen_d['geo']), sum(gen_d['solarth']), sum(gen_d['solarpv']), sum(gen_d['smhydro']), sum(gen_d['biomass'])]
-
-    #ax1 = plt.subplots()
-    #   plt.pie(totals, labels=pie_labels, shadow=False, startangle=90, autopct='%1.1f%%')
-    #   plt.axis('equal')
-
-    #Generation stacked area plot
-    plt.figure(3)
-    plt.stackplot(list(map(int, reduced_time)), gen_d['coal'], gen_d['natgas'], gen_d['nuclear'])
-    plt.xlabel('Time [h]')
-    plt.ylabel('Production [MW]')
-    plt.title('Fuel Mix')
-
-    plt.show()
     Table
-    plt.pause(0.001)
     results_workbook.close()
 
     for key, val in list(gen_d.items()): gen_d[key] = []
+    dat_time = []
+    dat_cnt = 0
