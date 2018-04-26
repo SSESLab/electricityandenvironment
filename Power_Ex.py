@@ -219,6 +219,7 @@ while True:
     current_hour = ''
     i = -1
     while (next_page != None) or (page == 1):  # Multiple pages of requested data or first iteration
+        next_page = js_data['next']
         len_data = len(js_data['results'])  # Number of timestamped data groups
         for j in range(1, len_data-1):
             mix_num = len(js_data['results'][j]['genmix'])  # Number of fuel types listed
@@ -266,7 +267,6 @@ while True:
                 js_data = None
                 #print("==== Unable to retrieve subsequent pages. Data may be missing. ====")
                 continue
-            next_page = js_data['next']
 
         page += 1
         #           print("")
