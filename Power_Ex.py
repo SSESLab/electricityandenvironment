@@ -1,4 +1,4 @@
-# Developed by Kaden Plewe
+# Developed by Kaden E. Plewe
 # Start Date: 08/26/2016
 
 # -----------------------------------------------------------------------------
@@ -28,11 +28,11 @@ from IPython.display import display, HTML
 # -----------------------------------------------------------------------------
 # Power generation fuel types being included in this model are listed below
 
-# coal: 	thermal power from coal
+# coal: 	         thermal power from coal
 # natgas: 	thermal power from natural gas
 # nuclear: 	thermal power from nuclear
 # biogas: 	renewable energy from biogas or landfill gas
-# wind: 	renewable energy from wind
+# wind: 	         renewable energy from wind
 # geo:		renewable energy from geothermal
 # solarth:	renewable energy from solar (solar thermal)
 # solarpv:	renewable energy from solar (solar photovoltaic)
