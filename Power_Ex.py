@@ -57,7 +57,7 @@ convert = {'factor': ['withdrawal', 'consumption', 'CO2', 'NOx', 'SO2'], 'coal':
 time_rx = re.compile('[^-:TZ][0-9]*')
 
 # -----------------------------------------------------------------------------
-# Find the longitude and latitude of an input city using google's geocoding API
+# Find the longitude and latitude of desired location using google's geocoding API
 
 gmap_url = 'http://maps.googleapis.com/maps/api/geocode/json?'
 
@@ -85,9 +85,6 @@ while True:
         print("==== Failure To Retrieve LAT & LON ====")
         continue
 
-    # Convert to json format
-    # print(json.dumps(geo_js, indent=4))
-
     # Extract latitude, longitude, and complete adress
     lat = geo_js["results"][0]["geometry"]["location"]["lat"]
     lng = geo_js["results"][0]["geometry"]["location"]["lng"]
@@ -95,10 +92,6 @@ while True:
     location = geo_js['results'][0]['formatted_address']
     print(location)
     print("")
-
-    # verify location
-    # geo_check = input('Is this the correct location?')
-    # if geo_check == 'no': break
 
     # -----------------------------------------------------------------------------
     # Use the latitude and longitude to find the balancing authority
@@ -125,9 +118,6 @@ while True:
         print("==== Failure To Retrieve Balancing Authority ====")
         continue
 
-    # Convert to json format
-    # print(json.dumps(ba_js, indent=4))
-
     # Extract all of the attributes that will be used in the data query
     ba_count = len(ba_js)
     ba_name = str(ba_js[0]["name"])  # name attribute - full name of balancing authority
@@ -139,17 +129,14 @@ while True:
     print("Abbreviation: ", ba_abbrev)
     print("")
 
-    # Validate for data retrieval
-    # ba_check = input('Would you like to retrieve fuel mix data for these balancing authorities?')
-    # if ba_check == 'no': break
-
     # -----------------------------------------------------------------------------
     # Use balancing authority lists to retrieve fuel mix data for input location
 
     # Input WattTime API username and p-word to obtain access key
-    # print("Please provide a username and password for a valid WattTime account.")
+    print("Please provide a username and password for a valid WattTime account.")
     u_name = input('Username: ')
     p_word = input('Password: ')
+    print("")
 
     # Select start and end time for data interval
     print("Please indicate the start and end time for the data collection interval")
@@ -254,7 +241,7 @@ while True:
             try:
                 next_req = urllib.request.urlopen(next_page)
             except:
-                #print("==== Unable to retrieve subsequent pages. Data may be missing. ====")
+                print("==== Unable to retrieve subsequent pages. Data may be missing. ====")
                 continue
 
             # Read url data
@@ -265,7 +252,7 @@ while True:
                 js_data = json.loads(data)
             except:
                 js_data = None
-                #print("==== Unable to retrieve subsequent pages. Data may be missing. ====")
+                print("==== Unable to retrieve subsequent pages. Data may be missing. ====")
                 continue
 
         page += 1
@@ -305,7 +292,7 @@ while True:
     print("Reduced Time Length: ", len(reduced_date))
 
     # -----------------------------------------------------------------------------
-    # Use water an demissions factors to calculate water withdrawl, water consumption, and emissions
+    # Use water and emissions factors to calculate water withdrawl, water consumption, and emissions
     gen_len = len(gen_d['biomass'])
     total_gen = np.zeros(gen_len)
     withdrawal = np.zeros(gen_len)
