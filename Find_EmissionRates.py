@@ -9,6 +9,8 @@
 import pandas as pd
 import numpy as np
 import math
+import glob
+import re
 
 #Define the class for storing emission factors
 class EF:
@@ -35,19 +37,35 @@ class EF:
 def import_emission_factors():
     #import excel data file
 
-    PLNT14 = pd.read_excel('eGRID2014_Data_v2_Emission_Factors.xlsm', sheetname='PLNT14', skiprows=1)
-    raw_len = len(PLNT14['BACODE'])
+    #regular expression for finding sheetname
+    eGRID_yr_re = re.compile('(?<=20)[0-9]*')
 
-    #print(PLNT14['BACODE'])
+    #query all eGRID filenames in current folder
+    filename = glob.glob('[Ee][Gg][Rr][Ii][Dd]*')
+    #print(filename)
 
+    #creat an array of all years for the eGRID files that were found
+    eGRID_yr = eGRID_yr_re.findall(str(filename))
+    #print(eGRID_yr)
+
+    max_yr = np.argmax([int(i) for i in eGRID_yr])
+
+    #make sheet name for most recent filename
+    sn = 'PLNT' + eGRID_yr[max_yr]
+
+    #query data for most recent eGRID data set in folder
+    PLNT = pd.read_excel(filename[max_yr], sheet_name=sn, skiprows=1)
+    raw_len = len(PLNT['BACODE'])
+
+    #print(PLNT['BACODE'])
 
 
     #Create array of ba codes to be used in parsing data
     BA_Data = {}
     for i in range(0, raw_len):
-        try: x = BA_Data[str(PLNT14['BACODE'][i])]
+        try: x = BA_Data[str(PLNT['BACODE'][i])]
         except:
-            BA_Data[PLNT14['BACODE'][i]] = EF()
+            BA_Data[PLNT['BACODE'][i]] = EF()
 
     #print(BA_Data)
 
@@ -74,39 +92,39 @@ def import_emission_factors():
 
         #calculate coal emission factors for each balancing authority
         for i in range(0, raw_len):
-            if PLNT14['BACODE'][i] == key and PLNT14['PLFUELCT'][i] == 'COAL':
-                if np.isnan(PLNT14['PLNGENAN'][i]) == 0:
-                    COAL_CO2_Den += PLNT14['PLNGENAN'][i]
-                    COAL_NOx_Den += PLNT14['PLNGENAN'][i]
-                    COAL_SO2_Den += PLNT14['PLNGENAN'][i]
+            if PLNT['BACODE'][i] == key and PLNT['PLFUELCT'][i] == 'COAL':
+                if np.isnan(PLNT['PLNGENAN'][i]) == 0:
+                    COAL_CO2_Den += PLNT['PLNGENAN'][i]
+                    COAL_NOx_Den += PLNT['PLNGENAN'][i]
+                    COAL_SO2_Den += PLNT['PLNGENAN'][i]
 
-                    if np.isnan(PLNT14['PLCO2RTA'][i]) == 0: COAL_CO2_Num += PLNT14['PLCO2RTA'][i]*PLNT14['PLNGENAN'][i]
-                    if np.isnan(PLNT14['PLNOXRTA'][i]) == 0: COAL_NOx_Num += PLNT14['PLNOXRTA'][i]*PLNT14['PLNGENAN'][i]
-                    if np.isnan(PLNT14['PLSO2RTA'][i]) == 0: COAL_SO2_Num += PLNT14['PLSO2RTA'][i]*PLNT14['PLNGENAN'][i]
+                    if np.isnan(PLNT['PLCO2RTA'][i]) == 0: COAL_CO2_Num += PLNT['PLCO2RTA'][i]*PLNT['PLNGENAN'][i]
+                    if np.isnan(PLNT['PLNOXRTA'][i]) == 0: COAL_NOx_Num += PLNT['PLNOXRTA'][i]*PLNT['PLNGENAN'][i]
+                    if np.isnan(PLNT['PLSO2RTA'][i]) == 0: COAL_SO2_Num += PLNT['PLSO2RTA'][i]*PLNT['PLNGENAN'][i]
 
         # calculate gas emission factors for each balancing authority
         for i in range(0, raw_len):
-            if PLNT14['BACODE'][i] == key and PLNT14['PLFUELCT'][i] == 'GAS':
-                if np.isnan(PLNT14['PLNGENAN'][i]) == 0:
-                    GAS_CO2_Den += PLNT14['PLNGENAN'][i]
-                    GAS_NOx_Den += PLNT14['PLNGENAN'][i]
-                    GAS_SO2_Den += PLNT14['PLNGENAN'][i]
+            if PLNT['BACODE'][i] == key and PLNT['PLFUELCT'][i] == 'GAS':
+                if np.isnan(PLNT['PLNGENAN'][i]) == 0:
+                    GAS_CO2_Den += PLNT['PLNGENAN'][i]
+                    GAS_NOx_Den += PLNT['PLNGENAN'][i]
+                    GAS_SO2_Den += PLNT['PLNGENAN'][i]
 
-                    if np.isnan(PLNT14['PLCO2RTA'][i]) == 0: GAS_CO2_Num += PLNT14['PLCO2RTA'][i]*PLNT14['PLNGENAN'][i]
-                    if np.isnan(PLNT14['PLNOXRTA'][i]) == 0: GAS_NOx_Num += PLNT14['PLNOXRTA'][i]*PLNT14['PLNGENAN'][i]
-                    if np.isnan(PLNT14['PLSO2RTA'][i]) == 0: GAS_SO2_Num += PLNT14['PLSO2RTA'][i]*PLNT14['PLNGENAN'][i]
+                    if np.isnan(PLNT['PLCO2RTA'][i]) == 0: GAS_CO2_Num += PLNT['PLCO2RTA'][i]*PLNT['PLNGENAN'][i]
+                    if np.isnan(PLNT['PLNOXRTA'][i]) == 0: GAS_NOx_Num += PLNT['PLNOXRTA'][i]*PLNT['PLNGENAN'][i]
+                    if np.isnan(PLNT['PLSO2RTA'][i]) == 0: GAS_SO2_Num += PLNT['PLSO2RTA'][i]*PLNT['PLNGENAN'][i]
 
         # calculate biomass emission factors for each balancing authority
         for i in range(0, raw_len):
-            if PLNT14['BACODE'][i] == key and PLNT14['PLFUELCT'][i] == 'BIOMASS':
-                if np.isnan(PLNT14['PLNGENAN'][i]) == 0:
-                    BIOMASS_CO2_Den += PLNT14['PLNGENAN'][i]
-                    BIOMASS_NOx_Den += PLNT14['PLNGENAN'][i]
-                    BIOMASS_SO2_Den += PLNT14['PLNGENAN'][i]
+            if PLNT['BACODE'][i] == key and PLNT['PLFUELCT'][i] == 'BIOMASS':
+                if np.isnan(PLNT['PLNGENAN'][i]) == 0:
+                    BIOMASS_CO2_Den += PLNT['PLNGENAN'][i]
+                    BIOMASS_NOx_Den += PLNT['PLNGENAN'][i]
+                    BIOMASS_SO2_Den += PLNT['PLNGENAN'][i]
 
-                    if np.isnan(PLNT14['PLCO2RTA'][i]) == 0: BIOMASS_CO2_Num += PLNT14['PLCO2RTA'][i]*PLNT14['PLNGENAN'][i]
-                    if np.isnan(PLNT14['PLNOXRTA'][i]) == 0: BIOMASS_NOx_Num += PLNT14['PLNOXRTA'][i]*PLNT14['PLNGENAN'][i]
-                    if np.isnan(PLNT14['PLSO2RTA'][i]) == 0: BIOMASS_SO2_Num += PLNT14['PLSO2RTA'][i]*PLNT14['PLNGENAN'][i]
+                    if np.isnan(PLNT['PLCO2RTA'][i]) == 0: BIOMASS_CO2_Num += PLNT['PLCO2RTA'][i]*PLNT['PLNGENAN'][i]
+                    if np.isnan(PLNT['PLNOXRTA'][i]) == 0: BIOMASS_NOx_Num += PLNT['PLNOXRTA'][i]*PLNT['PLNGENAN'][i]
+                    if np.isnan(PLNT['PLSO2RTA'][i]) == 0: BIOMASS_SO2_Num += PLNT['PLSO2RTA'][i]*PLNT['PLNGENAN'][i]
 
         #import emission factors
         try:
