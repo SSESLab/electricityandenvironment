@@ -54,7 +54,7 @@ def import_emission_factors():
     sn = 'PLNT' + eGRID_yr[max_yr]
 
     #query data for most recent eGRID data set in folder
-    PLNT = pd.read_excel(filename[max_yr], sheet_name=sn, skiprows=1)
+    PLNT = pd.read_excel(filename[max_yr], sheetname=sn, skiprows=1)
     raw_len = len(PLNT['BACODE'])
 
     #print(PLNT['BACODE'])
