@@ -23,7 +23,7 @@ Outputs:
 
 Instructions:
 1) Download the electricityandenvironment zip file
-2) Run the Power_Ex.py file with the necessary dependancies (Python3, urllib, numpy, pandas)
-   Note: The FindEmission_Rates.py file must be located in the same folder
+2) Run the Power_Ex.py or Power_Ex.ipynb file if using a jupyter notebook file with the necessary dependancies (Python3, urllib, numpy, pandas)
+   Note: The FindEmission_Rates.py or FindEmission_Rates.ipynb file must be located in the same folder
 3) Follow the command prompts to input the necessary information corresponding to your desired data output
 4) The output file will be located in the same directory as the Power_Ex.py file. It will be named Results.xlsx
