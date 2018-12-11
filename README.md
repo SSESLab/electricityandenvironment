@@ -1,4 +1,4 @@
-# electricityandenvironment
+# PECT: Power Externality Correlation Tool
 Quantifying the environmental impacts of electricity purchased from the grid
 
 License: LGPL
