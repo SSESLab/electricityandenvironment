@@ -2,7 +2,8 @@
 Quantifying the environmental impacts of electricity purchased from the grid
 
 License: LGPL
-
+*New!* Google Colaboratory Option: https://colab.research.google.com/drive/1UWDTphLkr8tja5R0HPN9nE66_8kPPYCx
+       Allows the script to run without dependency/software requirments on operating system. Google Chrome should be used for            downloading the results file. Firefox throws a Network Error.
 *New!* Read the paper (open access): https://doi.org/10.1016/j.softx.2018.12.001
 
 This script can be used to model the water consumption, water withdrawal, CO2 emissions, NOx emissions and SO2 emissions attributed to the power generation fuel mix within a specific location over a specified time frame.
