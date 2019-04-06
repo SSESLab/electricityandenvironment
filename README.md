@@ -2,8 +2,10 @@
 Quantifying the environmental impacts of electricity purchased from the grid
 
 License: LGPL
+
 *New!* Google Colaboratory Option: https://colab.research.google.com/drive/1UWDTphLkr8tja5R0HPN9nE66_8kPPYCx
        Allows the script to run without dependency/software requirments on operating system. Google Chrome should be used for            downloading the results file. Firefox throws a Network Error.
+       
 *New!* Read the paper (open access): https://doi.org/10.1016/j.softx.2018.12.001
 
 This script can be used to model the water consumption, water withdrawal, CO2 emissions, NOx emissions and SO2 emissions attributed to the power generation fuel mix within a specific location over a specified time frame.
@@ -24,7 +26,12 @@ Outputs:
 6) Emission factors for each fuel type
 7) Water consumption and withdrawal factors for each fuel type
 
-Instructions:
+Instructions (Colaboratory Notebook):
+1) Click on the link provided here: https://colab.research.google.com/drive/1UWDTphLkr8tja5R0HPN9nE66_8kPPYCx
+2) Run each cell and provide user inputs as directed
+3) Results file should be downloaded through your internet browser
+
+Instructions (Python File):
 1) Download the electricityandenvironment zip file
 2) Run the Power_Ex.py or Power_Ex.ipynb file if using a jupyter notebook file with the necessary dependancies (Python3, urllib, numpy, pandas)
    Note: The FindEmission_Rates.py or FindEmission_Rates.ipynb file must be located in the same folder
