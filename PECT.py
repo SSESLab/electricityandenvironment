@@ -50,7 +50,7 @@ dat_cnt = 0
 # Conversion factors for water consumption, water withdrawal and emissions ([withdrawal, consumption, CO2, NOx, SO2])
 convert = {'factor': ['withdrawal', 'consumption', 'CO2', 'NOx', 'SO2'], 'coal': [1005, 687, 0, 0, 0],
            'natgas': [225, 205, 0, 0, 0], 'nuclear': [1101, 672, 0, 0, 0], 'biogas': [878, 235, 0, 0, 0],
-           'wind': [0, 0, 0, 0, 0], 'geo': [15, 15, 0, 0, 0], 'solarth': [786, 786, 0, 0, 0],
+           'wind': [0, 0, 0, 0, 0], 'geo': [251, 251, 0, 0, 0], 'solarth': [786, 786, 0, 0, 0],
            'solarpv': [0, 0, 0, 0, 0], 'smhydro': [0, 4491, 0, 0, 0], 'biomass': [878, 235, 0, 0, 0]}
 
 # Declare regular expression sequences to be used in this script
